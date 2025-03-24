@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 import discord
-from discord import app_commands
 from discord.ext import commands
 import json
 from datetime import datetime
@@ -61,8 +60,7 @@ async def on_ready():
     bot.loop.create_task(verificar_datas())
 
 @bot.tree.command(name="adicionar-atividade", description="adicione uma atividade para a lista de atividades. Formato de data: DD/MM/AAAA")
-async def adicionar(interaction: discord.Interaction, disciplina: str, descricao: str, data: str, link: str):
-
+async def adicionar_atividade(interaction: discord.Interaction, disciplina: str, descricao: str, data: str, link: str):
     try:
         # Validação da entrada do usuário
         link = check_link(link)  
@@ -91,7 +89,7 @@ async def adicionar(interaction: discord.Interaction, disciplina: str, descricao
             f"🔗 **Link:** {link}\n"
         )
     except ValueError as e:
-        await interaction.response.send_message(str(e))  # Envia o erro para o chat
+        await interaction.response.send_message(str(e))
 
 @bot.tree.command(name="visualizar-atividades", description="Exibe todas as atividades salvas.")
 async def visualizar_atividades(interaction: discord.Interaction):
@@ -101,7 +99,6 @@ async def visualizar_atividades(interaction: discord.Interaction):
         await interaction.response.send_message("📂 Não há atividades cadastradas no momento.")
         return
     
-    # Formatando as atividades para exibição
     mensagem = "**📋 Lista de Atividades:**\n\n"
     for i, atividade in enumerate(atividades):
         mensagem += (
@@ -116,14 +113,29 @@ async def visualizar_atividades(interaction: discord.Interaction):
     await interaction.response.send_message(mensagem)
 
 async def verificar_datas():
-    await bot.wait_until_ready()  # Espera o bot estar pronto
+    await bot.wait_until_ready()
     while not bot.is_closed():
         atividades = carregar_atividades()
+        atividades_removidas = False
+        channel = bot.get_channel(1341729776897097728)
+
         hoje = datetime.now(FUSO_HORARIO).date()
 
-        for atividade in atividades:
+        for atividade in list(atividades):
             data_atividade = datetime.strptime(atividade['Data'], "%d/%m/%Y").date()
             dias_restantes = (data_atividade - hoje).days
+            print(dias_restantes)
+            
+            if dias_restantes <= 0:
+                atividades.remove(atividade)
+                atividades_removidas = True
+                if channel:
+                    await channel.send(
+                        f"🚫 **Atividade expirada!** 🚫\n\n"
+                        f"**Disciplina:** {atividade['Disciplina']}\n"
+                        f"**Atividade**   {atividade['Atividade']}\n"
+                    )
+                continue
 
             if dias_restantes in [40, 30, 20, 15, 10, 5, 3, 1]:
                 mensagem = (
@@ -134,13 +146,13 @@ async def verificar_datas():
                     f"🔗 **Link:** {atividade['Link']}\n"
                     f"⏳ **Faltam {dias_restantes} dias!**\n"
                 )
-                # Envia a mensagem para um canal específico (substitua CHANNEL_ID pelo ID do canal)
-                channel = bot.get_channel(1341729776897097728)  # Substitua CHANNEL_ID pelo ID do canal desejado
                 if channel:
                     await channel.send(mensagem)
 
-        # Verifica as datas a cada 24 horas
+        if atividades_removidas:
+            salvar_atividades(atividades)
+            print("JSON atualizado com atividades removidas.")
+
         await asyncio.sleep(86400)  # 86400 segundos = 24 horas
 
-# Inicia o bot
 bot.run(TOKEN)
