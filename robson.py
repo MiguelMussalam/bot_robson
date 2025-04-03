@@ -117,7 +117,7 @@ async def verificar_datas():
     while not bot.is_closed():
         atividades = carregar_atividades()
         atividades_removidas = False
-        channel = bot.get_channel(1341729776897097728)
+        channel = bot.get_channel(1147722433273544814)
 
         hoje = datetime.now(FUSO_HORARIO).date()
 
