@@ -1,0 +1,27 @@
+name: adicionar-atividade
+description: 'adicione uma atividade para a lista de atividades. Formato de data: DD/MM/AAAA'
+type: 1  # 1 = CHAT_INPUT (slash command)
+options:
+  - name: disciplina
+    description: Nome da disciplina
+    type: 3  # 3 = STRING
+    required: true
+
+  - name: descricao
+    description: Descrição da atividade
+    type: 3
+    required: true
+
+  - name: data
+    description: Data de entrega (formato DD/MM/AAAA)
+    type: 3
+    required: true
+
+  - name: link
+    description: Link relacionado à atividade
+    type: 3
+    required: true
+
+name: visualizar-atividades
+description: Exibe todas as atividades salvas.
+type: 1  # 1 = CHAT_INPUT (slash command)
